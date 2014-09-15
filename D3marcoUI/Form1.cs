@@ -30,7 +30,7 @@ namespace D3marcoUI
         bool BuffRun = true;
         bool SpamRun = true;
         bool run = false;
-        bool HoldSpam = false;
+        bool HoldSpam = true;
         bool KeepSpam = false;
         int SpamInterval = 100;
         int SpamInterval2 = 0;
@@ -351,7 +351,8 @@ namespace D3marcoUI
                 {
                     if (Control.MouseButtons == MouseButtons.Left)
                     {
-                        KeepSpam = true;
+                        if (KeepSpam) KeepSpam = false;
+                        if (!KeepSpam) KeepSpam = true;
                         System.Threading.Thread.Sleep(500);
                     }
                 }
@@ -360,15 +361,29 @@ namespace D3marcoUI
                 {
                     if (Control.MouseButtons == MouseButtons.Right)
                     {
-                        KeepSpam = true;
+                        if (KeepSpam) KeepSpam = false;
+                        if (!KeepSpam) KeepSpam = true;
                         System.Threading.Thread.Sleep(500);
                     }
                 }
 
-                if (Control.ModifierKeys == Keys.Shift)
+                if (MouseSpam == "Shift")
                 {
-                    KeepSpam = true;
-                    System.Threading.Thread.Sleep(500);
+                    if (Control.ModifierKeys == Keys.Shift)
+                    {
+                        if (KeepSpam) KeepSpam = false;
+                        if (!KeepSpam) KeepSpam = true;
+                        System.Threading.Thread.Sleep(500);
+                    }
+                }
+                if (MouseSpam == "Ctrl")
+                {
+                    if (Control.ModifierKeys == Keys.Control)
+                    {
+                        if (KeepSpam) KeepSpam = false;
+                        if (!KeepSpam) KeepSpam = true;
+                        System.Threading.Thread.Sleep(500);
+                    }
                 }
 
                 #region KeepSpam part
@@ -379,14 +394,9 @@ namespace D3marcoUI
                     {
                         while (KeepSpam)
                         {
-                            if (Spam1 == "RClick")
-                            {
-                                DoMouseClickRight();
-                            }
-                            else
-                            {
-                                SendKeys.SendWait(Spam1);
-                            }
+                            if (Spam1 == "RClick") DoMouseClickRight();
+                            else SendKeys.SendWait(Spam1);
+
                             if (Control.MouseButtons == MouseButtons.Left)
                             {
                                 KeepSpam = false;
@@ -394,14 +404,9 @@ namespace D3marcoUI
                                 break;
                             }
                             System.Threading.Thread.Sleep(SpamInterval);
-                            if (Spam2 == "RClick")
-                            {
-                                DoMouseClickRight();
-                            }
-                            else
-                            {
-                                SendKeys.SendWait(Spam2);
-                            }
+                            if (Spam2 == "RClick") DoMouseClickRight();
+                            else SendKeys.SendWait(Spam2);
+
                             if (Control.MouseButtons == MouseButtons.Left)
                             {
                                 KeepSpam = false;
@@ -510,7 +515,7 @@ namespace D3marcoUI
                     }
                     else if (MouseSpam == "Shift")
                     {
-                        while (Control.ModifierKeys == Keys.Shift)
+                        while (KeepSpam)
                         {
                             if (Spam1 == "LClick" || Spam1 == "RClick")
                             {
@@ -520,6 +525,12 @@ namespace D3marcoUI
                             else
                             {
                                 SendKeys.SendWait(Spam1);
+                            }
+                            if (Control.ModifierKeys == Keys.Shift)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
                             }
                             System.Threading.Thread.Sleep(SpamInterval);
                             if (Spam2 == "LClick" || Spam2 == "RClick")
@@ -531,6 +542,12 @@ namespace D3marcoUI
                             {
                                 SendKeys.SendWait(Spam2);
                             }
+                            if (Control.ModifierKeys == Keys.Shift)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
                             System.Threading.Thread.Sleep(SpamInterval2);
                             if (Spam3 == "LClick" || Spam3 == "RClick")
                             {
@@ -540,6 +557,12 @@ namespace D3marcoUI
                             else
                             {
                                 SendKeys.SendWait(Spam3);
+                            }
+                            if (Control.ModifierKeys == Keys.Shift)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
                             }
                             System.Threading.Thread.Sleep(SpamInterval3);
                             if (Spam4 == "LClick" || Spam4 == "RClick")
@@ -551,12 +574,27 @@ namespace D3marcoUI
                             {
                                 SendKeys.SendWait(Spam4);
                             }
+                            if (Control.ModifierKeys == Keys.Shift)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
+
                             System.Threading.Thread.Sleep(SpamInterval4);
+
+                            if (Control.ModifierKeys == Keys.Shift)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
+
                         }
                     }
                     else if (MouseSpam == "Ctrl")
                     {
-                        while (Control.ModifierKeys == Keys.Control)
+                        while (KeepSpam)
                         {
                             if (Spam1 == "LClick" || Spam1 == "RClick")
                             {
@@ -566,6 +604,12 @@ namespace D3marcoUI
                             else
                             {
                                 SendKeys.SendWait(Spam1);
+                            }
+                            if (Control.ModifierKeys == Keys.Control)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
                             }
                             System.Threading.Thread.Sleep(SpamInterval);
                             if (Spam2 == "LClick" || Spam2 == "RClick")
@@ -577,6 +621,12 @@ namespace D3marcoUI
                             {
                                 SendKeys.SendWait(Spam2);
                             }
+                            if (Control.ModifierKeys == Keys.Control)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
                             System.Threading.Thread.Sleep(SpamInterval2);
                             if (Spam3 == "LClick" || Spam3 == "RClick")
                             {
@@ -586,6 +636,12 @@ namespace D3marcoUI
                             else
                             {
                                 SendKeys.SendWait(Spam3);
+                            }
+                            if (Control.ModifierKeys == Keys.Control)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
                             }
                             System.Threading.Thread.Sleep(SpamInterval3);
                             if (Spam4 == "LClick" || Spam4 == "RClick")
@@ -597,7 +653,21 @@ namespace D3marcoUI
                             {
                                 SendKeys.SendWait(Spam4);
                             }
+                            if (Control.ModifierKeys == Keys.Control)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
+
                             System.Threading.Thread.Sleep(SpamInterval4);
+
+                            if (Control.ModifierKeys == Keys.Control)
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
                         }
                     }
                 }
@@ -627,8 +697,6 @@ namespace D3marcoUI
 
             if (checkBox1.Checked)
             {
-                HoldSpam = true;
-
                 Thread SpamThread = new Thread(SpamHold);
                 SpamThread.IsBackground = true;
                 SpamThread.Start();

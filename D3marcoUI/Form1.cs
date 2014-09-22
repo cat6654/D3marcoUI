@@ -36,6 +36,12 @@ namespace D3marcoUI
         int SpamInterval2 = 0;
         int SpamInterval3 = 0;
         int SpamInterval4 = 0;
+        bool stopSpamThread = false;
+        bool stopBuffThread = false;
+        Thread spamT;
+        Thread buffT;
+        ManualResetEvent threadInterrupt = new ManualResetEvent(false);
+        ManualResetEvent buffThreadInterrupt = new ManualResetEvent(false);
 
         //mouse clicks simulation function
         #region mouse click
@@ -121,6 +127,12 @@ namespace D3marcoUI
         {
             while (BuffRun)
             {
+                if (stopBuffThread)
+                {
+                    stopBuffThread = false;
+                    break;
+                }
+
                 if (Control.IsKeyLocked(BuffHotKey))
                 {
                     run = true;
@@ -144,6 +156,12 @@ namespace D3marcoUI
             while (run)
             {
                 System.Threading.Thread.Sleep(1);
+                if (stopBuffThread)
+                {
+                    stopBuffThread = false;
+                    break;
+                }
+
                 if (!Control.IsKeyLocked(BuffHotKey))
                 {
                     BuffRun = true;
@@ -162,10 +180,24 @@ namespace D3marcoUI
             while (SpamRun)
             {
                 System.Threading.Thread.Sleep(1);
+
+                if (stopSpamThread)
+                {
+                    stopSpamThread = false;
+                    break;
+                }
+
                 if (MouseSpam == "LMouseButton")
                 {
                     while (Control.MouseButtons == MouseButtons.Left)
-                    {                     
+                    {
+
+                        if (stopSpamThread)
+                        {
+                            stopSpamThread = false;
+                            break;
+                        }
+
                         if (Spam1 == "RClick")
                         {
                             DoMouseClickRight();
@@ -208,6 +240,12 @@ namespace D3marcoUI
                     {
                         while (Control.MouseButtons == MouseButtons.Right)
                         {
+                            if (stopSpamThread)
+                            {
+                                stopSpamThread = false;
+                                break;
+                            }
+
                             if (Spam1 == "LClick")
                             {
                                 DoMouseClickLeft();
@@ -249,6 +287,12 @@ namespace D3marcoUI
                 {
                     while (Control.ModifierKeys == Keys.Shift)
                     {
+                        if (stopSpamThread)
+                        {
+                            stopSpamThread = false;
+                            break;
+                        }
+
                         if (Spam1 == "LClick" || Spam1 == "RClick")
                         {
                             if (Spam1 == "LClick") DoMouseClickLeft();
@@ -295,6 +339,11 @@ namespace D3marcoUI
                 {
                     while (Control.ModifierKeys == Keys.Control)
                     {
+                        if (stopSpamThread)
+                        {
+                            stopSpamThread = false;
+                            break;
+                        }
                         if (Spam1 == "LClick" || Spam1 == "RClick")
                         {
                             if (Spam1 == "LClick") DoMouseClickLeft();
@@ -347,6 +396,13 @@ namespace D3marcoUI
             while (HoldSpam)
             {
                 System.Threading.Thread.Sleep(1);
+
+                if (stopSpamThread)
+                {
+                    stopSpamThread = false;
+                    break;
+                }
+
                 if (MouseSpam == "LMouseButton")
                 {
                     if (Control.MouseButtons == MouseButtons.Left)
@@ -390,10 +446,23 @@ namespace D3marcoUI
                 while (KeepSpam)
                 {
                     System.Threading.Thread.Sleep(1);
+
+                    if (stopSpamThread)
+                    {
+                        stopSpamThread = false;
+                        break;
+                    }
+
                     if (MouseSpam == "LMouseButton")
                     {
                         while (KeepSpam)
                         {
+                            if (stopSpamThread)
+                            {
+                                stopSpamThread = false;
+                                break;
+                            }
+
                             if (Spam1 == "RClick") DoMouseClickRight();
                             else SendKeys.SendWait(Spam1);
 
@@ -451,6 +520,12 @@ namespace D3marcoUI
                     {
                         while (KeepSpam)
                         {
+                            if (stopSpamThread)
+                            {
+                                stopSpamThread = false;
+                                break;
+                            }
+
                             if (Spam1 == "LClick")
                             {
                                 DoMouseClickLeft();
@@ -517,6 +592,12 @@ namespace D3marcoUI
                     {
                         while (KeepSpam)
                         {
+                            if (stopSpamThread)
+                            {
+                                stopSpamThread = false;
+                                break;
+                            }
+
                             if (Spam1 == "LClick" || Spam1 == "RClick")
                             {
                                 if (Spam1 == "LClick") DoMouseClickLeft();
@@ -596,6 +677,12 @@ namespace D3marcoUI
                     {
                         while (KeepSpam)
                         {
+                            if (stopSpamThread)
+                            {
+                                stopSpamThread = false;
+                                break;
+                            }
+
                             if (Spam1 == "LClick" || Spam1 == "RClick")
                             {
                                 if (Spam1 == "LClick") DoMouseClickLeft();
@@ -695,18 +782,22 @@ namespace D3marcoUI
             if (Spam3 == "") SpamInterval3 = 0;
             if (Spam4 == "") SpamInterval4 = 0;
 
+            threadInterrupt.Reset();
+
             if (checkBox1.Checked)
             {
-                Thread SpamThread = new Thread(SpamHold);
-                SpamThread.IsBackground = true;
-                SpamThread.Start();
+                //Thread SpamThread = new Thread(SpamHold);
+                spamT = new Thread(SpamHold);
+                spamT.IsBackground = true;
+                spamT.Start();
 
             }
             else
             {
-                Thread SpamThread = new Thread(Spam);
-                SpamThread.IsBackground = true;
-                SpamThread.Start();
+                //Thread SpamThread = new Thread(Spam);
+                spamT = new Thread(Spam);
+                spamT.IsBackground = true;
+                spamT.Start();
             }
             button1.Enabled = false;
             comboBox1.Enabled = false;
@@ -717,6 +808,7 @@ namespace D3marcoUI
             checkBox1.Enabled = false;
             numericUpDown1.Enabled = false;
             checkBox1.Enabled = false;
+            button2.Enabled = true;
 
         }
 
@@ -738,9 +830,11 @@ namespace D3marcoUI
             if (Buff2 == "") Buff1Interval = 0;
             if (Buff3 == "") Buff2Interval = 0;
 
-            Thread BuffThread = new Thread(Buff);
-            BuffThread.IsBackground = true;
-            BuffThread.Start();
+            buffThreadInterrupt.Reset();
+
+            buffT = new Thread(Buff);
+            buffT.IsBackground = true;
+            buffT.Start();
             button4.Enabled = false;
             comboBox4.Enabled = false;
             comboBox5.Enabled = false;
@@ -749,6 +843,7 @@ namespace D3marcoUI
             numericUpDown2.Enabled = false;
             numericUpDown3.Enabled = false;
             comboBox6.Enabled = false;
+            button3.Enabled = true;
 
         }
 
@@ -840,6 +935,53 @@ namespace D3marcoUI
                 comboBox3.Text = "Shift";
                 MessageBox.Show("You cannot spam Right Click while Right Mouse Button is pressed.");
             }
+
+        }
+        //stop spam thread
+        private void button2_Click(object sender, EventArgs e)
+        {
+            
+            stopSpamThread = true;
+
+            if (!spamT.IsAlive)
+            {
+                spamT.Join();
+                threadInterrupt.Set();
+            }
+
+            //bring back disabled UI items
+            button1.Enabled = true;
+            comboBox1.Enabled = true;
+            comboBox2.Enabled = true;
+            comboBox3.Enabled = true;
+            comboBox8.Enabled = true;
+            comboBox9.Enabled = true;
+            checkBox1.Enabled = true;
+            numericUpDown1.Enabled = true;
+            checkBox1.Enabled = true;
+            button2.Enabled = false;
+        }
+        //stop buff thread
+        private void button3_Click(object sender, EventArgs e)
+        {
+
+            stopBuffThread = true;
+
+            if (!buffT.IsAlive)
+            {
+                buffT.Join();
+                buffThreadInterrupt.Set();
+            }
+            //bring back disabled UI items
+            button4.Enabled = true;
+            comboBox4.Enabled = true;
+            comboBox5.Enabled = true;
+            numericUpDown4.Enabled = true;
+            comboBox7.Enabled = true;
+            numericUpDown2.Enabled = true;
+            numericUpDown3.Enabled = true;
+            comboBox6.Enabled = true;
+            button3.Enabled = false;
 
         }
 

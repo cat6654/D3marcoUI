@@ -10,17 +10,20 @@ using System.Threading;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Xml;
+using System.Windows.Input;
 
 namespace D3marcoUI
 {
     public partial class Form1 : Form
     {
         int BuffTimer = 10000;
-        int Buff1Interval = 300;
-        int Buff2Interval = 300;
+        int Buff1Interval = 10;
+        int Buff2Interval = 10;
+        int Buff3Interval = 10;
         string Buff1 = "";
         string Buff2 = "";
         string Buff3 = "";
+        string Buff4 = "";
         string Spam1 = "";
         string Spam2 = "";
         string Spam3 = "";
@@ -38,14 +41,18 @@ namespace D3marcoUI
         int SpamInterval4 = 0;
         bool stopSpamThread = false;
         bool stopBuffThread = false;
+        bool ReadCustomKey = false;
+        string CustomSpamKey = "";
         Thread spamT;
         Thread buffT;
         ManualResetEvent threadInterrupt = new ManualResetEvent(false);
         ManualResetEvent buffThreadInterrupt = new ManualResetEvent(false);
 
-        //mouse clicks simulation function
+        
+
+        ////mouse clicks simulation function
         #region mouse click
-        [DllImport("user32.dll",CharSet=CharSet.Auto, CallingConvention=CallingConvention.StdCall)]
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
         public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
 
         public const int MouseLeftClick = 0x02;
@@ -53,18 +60,19 @@ namespace D3marcoUI
         public const int MouseRightClick = 0x08;
         public const int MouseRightClickUP = 0x10;
 
+
         public void DoMouseClickLeft()
         {
             //Call the imported function with the cursor's current position
-            int X = Cursor.Position.X;
-            int Y = Cursor.Position.Y;
+            int X = System.Windows.Forms.Cursor.Position.X;
+            int Y = System.Windows.Forms.Cursor.Position.Y;
             mouse_event(MouseLeftClick | MouseLeftClickUP, X, Y, 0, 0);
         }
         public void DoMouseClickRight()
         {
             //Call the imported function with the cursor's current position
-            int X = Cursor.Position.X;
-            int Y = Cursor.Position.Y;
+            int X = System.Windows.Forms.Cursor.Position.X;
+            int Y = System.Windows.Forms.Cursor.Position.Y;
             mouse_event(MouseRightClick | MouseRightClickUP, X, Y, 0, 0);
         }
         #endregion
@@ -98,14 +106,27 @@ namespace D3marcoUI
                         comboBox5.Text = reader.ReadElementContentAsString();
                         reader.ReadToFollowing("Buff3");
                         comboBox7.Text = reader.ReadElementContentAsString();
+                        reader.ReadToFollowing("Buff4");
+                        comboBox10.Text = reader.ReadElementContentAsString();
                         reader.ReadToFollowing("BuffTimer");
                         numericUpDown4.Text = reader.ReadElementContentAsString();
                         reader.ReadToFollowing("Buff1Interval");
                         numericUpDown2.Value = Convert.ToInt32(reader.ReadElementContentAsString());
                         reader.ReadToFollowing("Buff2Interval");
                         numericUpDown3.Value = Convert.ToInt32(reader.ReadElementContentAsString());
+                        reader.ReadToFollowing("Buff3Interval");
+                        numericUpDown5.Value = Convert.ToInt32(reader.ReadElementContentAsString());
                         reader.ReadToFollowing("SpamKey");
-                        comboBox3.Text = reader.ReadElementContentAsString();
+                        var temp = reader.ReadElementContentAsString();
+                        if (temp != "Shift" && temp != "Ctrl" && temp != "LMouseButton" && temp != "RMouseButton")
+                        {
+                            comboBox3.Items.Add(temp);
+                            comboBox3.Text = temp;
+                        }
+                        else
+                        {
+                            comboBox3.Text = temp;
+                        }
                         reader.ReadToFollowing("BuffHotKey");
                         comboBox6.Text = reader.ReadElementContentAsString();
                         reader.Close();
@@ -133,24 +154,32 @@ namespace D3marcoUI
                     break;
                 }
 
-                if (Control.IsKeyLocked(BuffHotKey))
+                if (!Control.IsKeyLocked(BuffHotKey))
                 {
                     run = true;
                     BuffRun = false;
                 }
-                if (Control.IsKeyLocked(BuffHotKey)) break;
+                if (!Control.IsKeyLocked(BuffHotKey)) break;
                 SendKeys.SendWait(Buff1);
                 System.Threading.Thread.Sleep(Buff1Interval);
-                if (Buff2 != "") SendKeys.SendWait(Buff2);
-                if (Buff2 != "") System.Threading.Thread.Sleep(Buff2Interval);
-                if (Buff3 != "") SendKeys.SendWait(Buff3);
+                if (Buff2 != "")
+                {
+                    SendKeys.SendWait(Buff2);
+                    System.Threading.Thread.Sleep(Buff2Interval);
+                }
+                if (Buff3 != "")
+                {
+                    SendKeys.SendWait(Buff3);
+                    System.Threading.Thread.Sleep(Buff3Interval);
+                }
+                if (Buff4 != "") SendKeys.SendWait(Buff4);
                 System.Threading.Thread.Sleep(BuffTimer);
-                if (Control.IsKeyLocked(BuffHotKey))
+                if (!Control.IsKeyLocked(BuffHotKey))
                 {
                     run = true;
                     BuffRun = false;
                 }
-                if (Control.IsKeyLocked(BuffHotKey)) break;
+                if (!Control.IsKeyLocked(BuffHotKey)) break;
             }
 
             while (run)
@@ -162,11 +191,12 @@ namespace D3marcoUI
                     break;
                 }
 
-                if (!Control.IsKeyLocked(BuffHotKey))
+                if (Control.IsKeyLocked(BuffHotKey))
                 {
                     BuffRun = true;
                     run = false;
                     Buff();
+                    break;
                 }
             }
             
@@ -386,6 +416,60 @@ namespace D3marcoUI
                         System.Threading.Thread.Sleep(SpamInterval4);
                     }
                 }
+                if (CustomSpamKey != "")
+                {
+                    Key key_restored = (Key)Enum.Parse(typeof(Key), CustomSpamKey);
+                    while (System.Windows.Input.Keyboard.IsKeyDown(key_restored))
+                    {
+                        if (stopSpamThread)
+                        {
+                            stopSpamThread = false;
+                            break;
+                        }
+                        if (Spam1 == "LClick" || Spam1 == "RClick")
+                        {
+                            if (Spam1 == "LClick") DoMouseClickLeft();
+                            if (Spam1 == "RClick") DoMouseClickRight();
+                        }
+                        else
+                        {
+                            SendKeys.SendWait(Spam1);
+                        }
+                        System.Threading.Thread.Sleep(SpamInterval);
+                        if (Spam2 == "LClick" || Spam2 == "RClick")
+                        {
+                            if (Spam2 == "LClick") DoMouseClickLeft();
+                            if (Spam2 == "RClick") DoMouseClickRight();
+                        }
+                        else
+                        {
+                            SendKeys.SendWait(Spam2);
+                        }
+                        System.Threading.Thread.Sleep(SpamInterval2);
+                        if (Spam3 == "LClick" || Spam3 == "RClick")
+                        {
+                            if (Spam3 == "LClick") DoMouseClickLeft();
+                            if (Spam3 == "RClick") DoMouseClickRight();
+                        }
+                        else
+                        {
+                            SendKeys.SendWait(Spam3);
+                        }
+                        System.Threading.Thread.Sleep(SpamInterval3);
+                        if (Spam4 == "LClick" || Spam4 == "RClick")
+                        {
+                            if (Spam4 == "LClick") DoMouseClickLeft();
+                            if (Spam4 == "RClick") DoMouseClickRight();
+                        }
+                        else
+                        {
+                            SendKeys.SendWait(Spam4);
+                        }
+                        System.Threading.Thread.Sleep(SpamInterval4);
+                    }
+                }
+
+
             }
         }
         #endregion
@@ -435,6 +519,16 @@ namespace D3marcoUI
                 if (MouseSpam == "Ctrl")
                 {
                     if (Control.ModifierKeys == Keys.Control)
+                    {
+                        if (KeepSpam) KeepSpam = false;
+                        if (!KeepSpam) KeepSpam = true;
+                        System.Threading.Thread.Sleep(500);
+                    }
+                }
+                if (CustomSpamKey != "")
+                {
+                    Key key_restored = (Key)Enum.Parse(typeof(Key), CustomSpamKey);
+                    if (System.Windows.Input.Keyboard.IsKeyDown(key_restored))
                     {
                         if (KeepSpam) KeepSpam = false;
                         if (!KeepSpam) KeepSpam = true;
@@ -757,6 +851,93 @@ namespace D3marcoUI
                             }
                         }
                     }
+                    if (CustomSpamKey != "")
+                    {
+                        Key key_restored = (Key)Enum.Parse(typeof(Key), CustomSpamKey);                            
+                        while (KeepSpam)
+                        {
+                            if (stopSpamThread)
+                            {
+                                stopSpamThread = false;
+                                break;
+                            }
+
+                            if (Spam1 == "LClick" || Spam1 == "RClick")
+                            {
+                                if (Spam1 == "LClick") DoMouseClickLeft();
+                                if (Spam1 == "RClick") DoMouseClickRight();
+                            }
+                            else
+                            {
+                                SendKeys.SendWait(Spam1);
+                            }
+                            if (System.Windows.Input.Keyboard.IsKeyDown(key_restored))
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
+                            System.Threading.Thread.Sleep(SpamInterval);
+                            if (Spam2 == "LClick" || Spam2 == "RClick")
+                            {
+                                if (Spam2 == "LClick") DoMouseClickLeft();
+                                if (Spam2 == "RClick") DoMouseClickRight();
+                            }
+                            else
+                            {
+                                SendKeys.SendWait(Spam2);
+                            }
+                            if (System.Windows.Input.Keyboard.IsKeyDown(key_restored))
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
+                            System.Threading.Thread.Sleep(SpamInterval2);
+                            if (Spam3 == "LClick" || Spam3 == "RClick")
+                            {
+                                if (Spam3 == "LClick") DoMouseClickLeft();
+                                if (Spam3 == "RClick") DoMouseClickRight();
+                            }
+                            else
+                            {
+                                SendKeys.SendWait(Spam3);
+                            }
+                            if (System.Windows.Input.Keyboard.IsKeyDown(key_restored))
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
+                            System.Threading.Thread.Sleep(SpamInterval3);
+                            if (Spam4 == "LClick" || Spam4 == "RClick")
+                            {
+                                if (Spam4 == "LClick") DoMouseClickLeft();
+                                if (Spam4 == "RClick") DoMouseClickRight();
+                            }
+                            else
+                            {
+                                SendKeys.SendWait(Spam4);
+                            }
+                            if (System.Windows.Input.Keyboard.IsKeyDown(key_restored))
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
+
+                            System.Threading.Thread.Sleep(SpamInterval4);
+
+                            if (System.Windows.Input.Keyboard.IsKeyDown(key_restored))
+                            {
+                                KeepSpam = false;
+                                System.Threading.Thread.Sleep(500);
+                                break;
+                            }
+                        }
+                    }
+
+
                 }
 
             }
@@ -772,6 +953,12 @@ namespace D3marcoUI
             Spam3 = comboBox8.Text;
             Spam4 = comboBox9.Text;
             MouseSpam = comboBox3.Text;
+            if (comboBox3.Text != "Shift" && comboBox3.Text != "Ctrl" && comboBox3.Text != "LMouseButton" && comboBox3.Text != "RMouseButton")
+            {
+                
+                CustomSpamKey = comboBox3.Text;
+            }
+            
 
             SpamInterval = Convert.ToInt32(numericUpDown1.Value);
             SpamInterval2 = Convert.ToInt32(numericUpDown1.Value);
@@ -786,17 +973,17 @@ namespace D3marcoUI
 
             if (checkBox1.Checked)
             {
-                //Thread SpamThread = new Thread(SpamHold);
                 spamT = new Thread(SpamHold);
                 spamT.IsBackground = true;
+                spamT.SetApartmentState(ApartmentState.STA);
                 spamT.Start();
 
             }
             else
             {
-                //Thread SpamThread = new Thread(Spam);
                 spamT = new Thread(Spam);
                 spamT.IsBackground = true;
+                spamT.SetApartmentState(ApartmentState.STA);
                 spamT.Start();
             }
             button1.Enabled = false;
@@ -818,17 +1005,20 @@ namespace D3marcoUI
             Buff1 = comboBox4.Text;
             Buff2 = comboBox5.Text;
             Buff3 = comboBox7.Text;
+            Buff4 = comboBox10.Text;
             if (comboBox6.Text == "CapsLock") BuffHotKey = Keys.CapsLock;
             if (comboBox6.Text == "ScrollLock") BuffHotKey = Keys.Scroll;
 
             Buff1Interval = Convert.ToInt32(numericUpDown2.Value);
             Buff2Interval = Convert.ToInt32(numericUpDown3.Value);
+            Buff3Interval = Convert.ToInt32(numericUpDown5.Value);
 
             //set Buff Timer    
             BuffTimer = Convert.ToInt32(numericUpDown4.Value);
 
             if (Buff2 == "") Buff1Interval = 0;
             if (Buff3 == "") Buff2Interval = 0;
+            if (Buff4 == "") Buff3Interval = 0;
 
             buffThreadInterrupt.Reset();
 
@@ -844,6 +1034,8 @@ namespace D3marcoUI
             numericUpDown3.Enabled = false;
             comboBox6.Enabled = false;
             button3.Enabled = true;
+            comboBox10.Enabled = false;
+            numericUpDown5.Enabled = false;
 
         }
 
@@ -854,7 +1046,7 @@ namespace D3marcoUI
             SpamRun = false;
             BuffTimer = 0;
             //TODO: problem disabling the caps lock
-            //if (Control.IsKeyLocked(Keys.CapsLock)) SendKeys.SendWait("{CAPSLOCK}");
+            //if (Control.IsKeyLocked(Keys.CapsLock)) SendKeys.SendWait("{CAPS LOCK}");
 
             //create config file
             #region create config
@@ -889,6 +1081,9 @@ namespace D3marcoUI
                 writer.WriteStartElement("Buff3");
                 writer.WriteString(comboBox7.Text);
                 writer.WriteEndElement();
+                writer.WriteStartElement("Buff4");
+                writer.WriteString(comboBox10.Text);
+                writer.WriteEndElement();
                 writer.WriteStartElement("BuffTimer");
                 writer.WriteString(numericUpDown4.Text);
                 writer.WriteEndElement();
@@ -898,8 +1093,18 @@ namespace D3marcoUI
                 writer.WriteStartElement("Buff2Interval");
                 writer.WriteString(numericUpDown3.Value.ToString());
                 writer.WriteEndElement();
+                writer.WriteStartElement("Buff3Interval");
+                writer.WriteString(numericUpDown5.Value.ToString());
+                writer.WriteEndElement();
                 writer.WriteStartElement("SpamKey");
-                writer.WriteString(comboBox3.Text);
+                if (comboBox3.Text == "Custom Button")
+                {
+                    writer.WriteString(CustomSpamKey);
+                }
+                else
+                {
+                    writer.WriteString(comboBox3.Text);
+                }
                 writer.WriteEndElement();
                 writer.WriteStartElement("BuffHotKey");
                 writer.WriteString(comboBox6.Text);
@@ -935,6 +1140,37 @@ namespace D3marcoUI
                 comboBox3.Text = "Shift";
                 MessageBox.Show("You cannot spam Right Click while Right Mouse Button is pressed.");
             }
+            //Pick custom Spam Button part
+            #region Custom Button
+            if (comboBox3.Text == "Custom Button")
+            {
+                pictureBox1.Visible = true;
+                //disable UI
+                button1.Enabled = false;
+                comboBox1.Enabled = false;
+                comboBox2.Enabled = false;
+                comboBox3.Enabled = false;
+                comboBox8.Enabled = false;
+                comboBox9.Enabled = false;
+                checkBox1.Enabled = false;
+                numericUpDown1.Enabled = false;
+                checkBox1.Enabled = false;                
+                button4.Enabled = false;
+                comboBox4.Enabled = false;
+                comboBox5.Enabled = false;
+                numericUpDown4.Enabled = false;
+                comboBox7.Enabled = false;
+                numericUpDown2.Enabled = false;
+                numericUpDown3.Enabled = false;
+                comboBox6.Enabled = false;             
+                comboBox10.Enabled = false;
+                numericUpDown5.Enabled = false;
+
+                //Read Custom Key
+                ReadCustomKey = true;
+            }
+            #endregion
+
 
         }
         //stop spam thread
@@ -960,6 +1196,8 @@ namespace D3marcoUI
             numericUpDown1.Enabled = true;
             checkBox1.Enabled = true;
             button2.Enabled = false;
+            comboBox10.Enabled = true;
+            numericUpDown5.Enabled = true;
         }
         //stop buff thread
         private void button3_Click(object sender, EventArgs e)
@@ -983,6 +1221,42 @@ namespace D3marcoUI
             comboBox6.Enabled = true;
             button3.Enabled = false;
 
+        }
+
+        //Read Custom Key
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (ReadCustomKey)
+            {
+                CustomSpamKey = keyData.ToString();
+                pictureBox1.Visible = false;
+                //Enable UI
+                button1.Enabled = true;
+                comboBox1.Enabled = true;
+                comboBox2.Enabled = true;
+                comboBox3.Enabled = true;
+                comboBox8.Enabled = true;
+                comboBox9.Enabled = true;
+                checkBox1.Enabled = true;
+                numericUpDown1.Enabled = true;
+                checkBox1.Enabled = true;
+                button4.Enabled = true;
+                comboBox4.Enabled = true;
+                comboBox5.Enabled = true;
+                numericUpDown4.Enabled = true;
+                comboBox7.Enabled = true;
+                numericUpDown2.Enabled = true;
+                numericUpDown3.Enabled = true;
+                comboBox6.Enabled = true;
+                comboBox10.Enabled = true;
+                numericUpDown5.Enabled = true;
+                comboBox3.Text = CustomSpamKey;
+
+                ReadCustomKey = false;
+
+                return ReadCustomKey;
+            }
+            return ReadCustomKey;
         }
 
     }
